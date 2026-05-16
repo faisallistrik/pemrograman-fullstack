@@ -112,8 +112,138 @@ php artisan serve
 - Booking memvalidasi jadwal agar alat atau ruang tidak dibooking dua kali dalam periode yang sama.
 - `POST /api/bookings/{id}/check-in` mengubah status booking menjadi `checked_in` dan menyimpan waktu check-in.
 
-## Catatan
+## Analisis Skema Database (Detail)
 
-- Gunakan header `Authorization: Bearer {api_token}` untuk semua endpoint terproteksi.
-- Data sample admin dan membership sudah tersedia setelah seeding.
-- Model Laravel disiapkan untuk mendukung inventory management, scheduling peminjaman, dan check-in real-time.
+Dokumen ini menjelaskan alasan desain tabel utama, relasi, dan aturan validasi yang diterapkan.
+
+- `users`
+  - Kolom utama: `id`, `name`, `email`, `role`, `api_token`, `password`, `remember_token`, `timestamps`.
+  - Tujuan: menyimpan akun admin dan user peminjam. `api_token` digunakan untuk autentikasi stateless dari aplikasi tablet.
+  - Indeks/constraint: `email` unik, `api_token` unik (nullable).
+
+- `equipment`
+  - Kolom utama: `id`, `code`, `name`, `category`, `quantity`, `condition`, `status`, `description`, `timestamps`.
+  - Tujuan: inventaris alat yang dapat dipinjam. `quantity` menyatakan stok, `status` menyatakan ketersediaan umum.
+  - Constraint: `code` unik untuk referensi fisik/perangkat.
+
+- `rooms`
+  - Kolom utama: `id`, `name`, `location`, `capacity`, `status`, `description`, `timestamps`.
+  - Tujuan: data ruang/ studio yang dapat dipesan.
+
+- `bookings`
+  - Kolom utama: `id`, `user_id`, `equipment_id`, `room_id`, `start_time`, `end_time`, `purpose`, `status`, `check_in_at`, `timestamps`.
+  - Tujuan: menyimpan peminjaman/booking yang dapat terkait `equipment` atau `room` (atau keduanya jika perlu).
+  - Relasi: `user_id` -> `users.id` (cascade on delete), `equipment_id` -> `equipment.id` (nullable), `room_id` -> `rooms.id` (nullable).
+  - Aturan bisnis penting:
+    - Hanya salah satu dari `equipment_id` atau `room_id` yang wajib pada pembuatan (required_without).
+    - Status booking: `pending`, `approved`, `checked_in`, `completed`, `cancelled`.
+    - Prevent double-booking: cek overlap waktu pada `equipment_id` atau `room_id` untuk status aktif (`pending`, `approved`, `checked_in`).
+
+Desain ini memudahkan:
+- auditing (timestamps),
+- validasi stok equipment (quantity),
+- hubungan user-booking untuk menampilkan riwayat peminjaman.
+
+Rekomendasi tambahan untuk produksi:
+- Tambahkan index pada `start_time`, `end_time`, `equipment_id`, dan `room_id` jika volume booking besar.
+- Pertimbangkan tabel `notifications` atau queue untuk notifikasi email/real-time.
+
+## Detail Endpoint API (Request / Response / Validasi)
+
+Semua endpoint yang dilindungi memerlukan header:
+
+```
+Authorization: Bearer {api_token}
+```
+
+1) Autentikasi
+- POST `/api/register`
+  - Body: `{ "name": "...", "email": "...", "password": "..." }`
+  - Response (201): `{ "user": { "id", "name", "email", "role" }, "message": "Registrasi berhasil..." }`
+
+- POST `/api/login`
+  - Body: `{ "email": "...", "password": "..." }`
+  - Response (200):
+    ```json
+    {
+      "access_token": "<token>",
+      "token_type": "Bearer",
+      "user": { "id", "name", "email", "role" }
+    }
+    ```
+
+2) Authenticated user
+- GET `/api/me` — mereturn data user saat ini (200)
+- POST `/api/logout` — menghapus `api_token` dan mengakhiri sesi (200)
+
+3) Equipment (CRUD)
+- GET `/api/equipment` — daftar semua equipment (200)
+- POST `/api/equipment` — buat equipment baru
+  - Validasi contoh: `code` (required, unique), `name`, `quantity` (integer >= 0)
+  - Response: 201 Created dengan objek equipment
+- GET `/api/equipment/{id}` — detail equipment (200)
+- PUT/PATCH `/api/equipment/{id}` — update (200)
+- DELETE `/api/equipment/{id}` — hapus (200, pesan konfirmasi)
+
+4) Rooms (CRUD)
+- GET `/api/rooms`
+- POST `/api/rooms` — buat room baru (`name`, `capacity`)
+- GET `/api/rooms/{id}`
+- PUT/PATCH `/api/rooms/{id}`
+- DELETE `/api/rooms/{id}`
+
+5) Bookings (peminjaman)
+- GET `/api/bookings` — daftar booking (200)
+  - Mendukung query param `?status=pending|approved|checked_in|completed|cancelled`
+- POST `/api/bookings` — buat booking baru
+  - Body contoh:
+    ```json
+    {
+      "equipment_id": 1,
+      "room_id": null,
+      "start_time": "2026-05-20 10:00:00",
+      "end_time": "2026-05-20 12:00:00",
+      "purpose": "Meeting"
+    }
+    ```
+  - Validasi utama:
+    - `start_time` harus >= now
+    - `end_time` > `start_time`
+    - tidak boleh terjadi overlap untuk `equipment_id` atau `room_id` pada status aktif
+  - Response: 201 Created dengan objek booking
+
+- GET `/api/bookings/{id}` — detail booking (200)
+- PUT/PATCH `/api/bookings/{id}` — update booking (200)
+  - Validasi update juga memeriksa konflik waktu jika mengubah jadwal atau resource
+- DELETE `/api/bookings/{id}` — hapus booking (200)
+
+- POST `/api/bookings/{id}/check-in` — menandai check-in
+  - Behavior:
+    - Jika booking sudah `checked_in` -> 422
+    - Jika booking `cancelled` atau `completed` -> 422
+    - Sukses: ubah `status` menjadi `checked_in`, set `check_in_at` ke waktu server (200)
+
+## Contoh penggunaan singkat (curl)
+
+Login dan gunakan token:
+
+```bash
+curl -X POST https://example.com/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"secret"}'
+```
+
+Kemudian panggil endpoint terlindungi:
+
+```bash
+curl -H "Authorization: Bearer <ACCESS_TOKEN>" https://example.com/api/equipment
+```
+
+## Catatan terakhir
+
+- Dokumen ini melengkapi dokumentasi teknis untuk mempermudah pengembangan fitur selanjutnya (mis. notifikasi email, integrasi real-time).
+- Jika ingin, saya bisa menambahkan contoh Postman collection atau OpenAPI spec untuk dokumentasi API lebih formal.
+
+
+## Hasil Test
+![Hasil Test](assets/images/hasil-test.png)
