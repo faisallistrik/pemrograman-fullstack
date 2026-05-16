@@ -36,6 +36,10 @@ class BookingController extends Controller
             }
         }
 
+        if ($response = $this->ensureBookingAvailability($data)) {
+            return $response;
+        }
+
         $data['user_id'] = $request->user()->id;
         $data['status'] = 'pending';
 
@@ -58,8 +62,29 @@ class BookingController extends Controller
             'status' => ['nullable', 'in:pending,approved,checked_in,completed,cancelled'],
         ]);
 
-        if (! empty($data['start_time']) && ! empty($data['end_time']) && strtotime($data['end_time']) <= strtotime($data['start_time'])) {
+        $startTime = $data['start_time'] ?? $booking->start_time->toDateTimeString();
+        $endTime = $data['end_time'] ?? $booking->end_time->toDateTimeString();
+
+        if (strtotime($endTime) <= strtotime($startTime)) {
             return response()->json(['message' => 'End time harus lebih besar dari start time.'], 422);
+        }
+
+        $data['equipment_id'] = $data['equipment_id'] ?? $booking->equipment_id;
+        $data['room_id'] = $data['room_id'] ?? $booking->room_id;
+
+        if (empty($data['equipment_id']) && empty($data['room_id'])) {
+            return response()->json(['message' => 'Booking harus memasukkan equipment atau room.'], 422);
+        }
+
+        $availabilityData = [
+            'equipment_id' => $data['equipment_id'],
+            'room_id' => $data['room_id'],
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+        ];
+
+        if ($response = $this->ensureBookingAvailability($availabilityData, $booking->id)) {
+            return $response;
         }
 
         $booking->update($data);
@@ -76,6 +101,10 @@ class BookingController extends Controller
 
     public function checkIn(Booking $booking)
     {
+        if (in_array($booking->status, ['cancelled', 'completed'], true)) {
+            return response()->json(['message' => 'Booking tidak dapat di-check-in karena status sudah dibatalkan atau selesai.'], 422);
+        }
+
         if ($booking->status === 'checked_in') {
             return response()->json(['message' => 'Booking sudah check-in.'], 422);
         }
@@ -86,5 +115,45 @@ class BookingController extends Controller
         ]);
 
         return $booking->load(['user', 'equipment', 'room']);
+    }
+
+    private function ensureBookingAvailability(array $data, ?int $bookingId = null)
+    {
+        $overlapConditions = function ($query) use ($data) {
+            $query->where(function ($query) use ($data) {
+                $query->whereBetween('start_time', [$data['start_time'], $data['end_time']])
+                    ->orWhereBetween('end_time', [$data['start_time'], $data['end_time']])
+                    ->orWhere(function ($query) use ($data) {
+                        $query->where('start_time', '<=', $data['start_time'])
+                            ->where('end_time', '>=', $data['end_time']);
+                    });
+            });
+        };
+
+        if (! empty($data['equipment_id'])) {
+            $equipmentOverlap = Booking::where('equipment_id', $data['equipment_id'])
+                ->whereIn('status', ['pending', 'approved', 'checked_in'])
+                ->when($bookingId, fn ($query) => $query->where('id', '!=', $bookingId))
+                ->where($overlapConditions)
+                ->exists();
+
+            if ($equipmentOverlap) {
+                return response()->json(['message' => 'Equipment sudah dibooking pada jadwal tersebut.'], 422);
+            }
+        }
+
+        if (! empty($data['room_id'])) {
+            $roomOverlap = Booking::where('room_id', $data['room_id'])
+                ->whereIn('status', ['pending', 'approved', 'checked_in'])
+                ->when($bookingId, fn ($query) => $query->where('id', '!=', $bookingId))
+                ->where($overlapConditions)
+                ->exists();
+
+            if ($roomOverlap) {
+                return response()->json(['message' => 'Room sudah dibooking pada jadwal tersebut.'], 422);
+            }
+        }
+
+        return null;
     }
 }

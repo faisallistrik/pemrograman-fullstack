@@ -20,36 +20,47 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Admin Smart Hub',
-            'email' => 'admin@smart-hub.local',
-            'role' => 'admin',
-            'api_token' => Str::random(80),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'admin@smart-hub.local'],
+            [
+                'name' => 'Admin Smart Hub',
+                'role' => 'admin',
+                'api_token' => Str::random(80),
+                'password' => 'password',
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Member Smart Hub',
-            'email' => 'member@smart-hub.local',
-            'role' => 'user',
-            'api_token' => Str::random(80),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'member@smart-hub.local'],
+            [
+                'name' => 'Member Smart Hub',
+                'role' => 'user',
+                'api_token' => Str::random(80),
+                'password' => 'password',
+            ]
+        );
 
-        Equipment::create([
-            'code' => 'EQ-001',
-            'name' => 'Kamera Mirrorless',
-            'category' => 'Audio Visual',
-            'quantity' => 3,
-            'condition' => 'Baik',
-            'description' => 'Peralatan studio untuk dokumentasi video.',
-        ]);
+        Equipment::firstOrCreate(
+            ['code' => 'EQ-001'],
+            [
+                'name' => 'Kamera Mirrorless',
+                'category' => 'Audio Visual',
+                'quantity' => 3,
+                'condition' => 'Baik',
+                'status' => 'Tersedia',
+                'description' => 'Peralatan studio untuk dokumentasi video.',
+            ]
+        );
 
-        Room::create([
-            'name' => 'Ruang Studio A',
-            'location' => 'Gedung 2, Lantai 1',
-            'capacity' => 12,
-            'status' => 'Tersedia',
-            'description' => 'Ruang kerja untuk produksi konten kreatif.',
-        ]);
+        Room::firstOrCreate(
+            ['name' => 'Ruang Studio A'],
+            [
+                'location' => 'Gedung 2, Lantai 1',
+                'capacity' => 12,
+                'status' => 'Tersedia',
+                'description' => 'Ruang kerja untuk produksi konten kreatif.',
+            ]
+        );
     }
 }
 

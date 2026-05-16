@@ -13,11 +13,11 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('equipment_id')->nullable()->constrained('equipment')->nullOnDelete();
             $table->foreignId('room_id')->nullable()->constrained('rooms')->nullOnDelete();
-            $table->timestamp('start_time');
-            $table->timestamp('end_time');
+            $table->dateTime('start_time');
+            $table->dateTime('end_time');
             $table->string('purpose');
             $table->enum('status', ['pending', 'approved', 'checked_in', 'completed', 'cancelled'])->default('pending');
-            $table->timestamp('check_in_at')->nullable();
+            $table->dateTime('check_in_at')->nullable();
             $table->timestamps();
         });
     }

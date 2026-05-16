@@ -30,6 +30,8 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
+> Pastikan database `smart_hub` sudah dibuat di MySQL sebelum menjalankan migrate.
+
 3. Install dependency:
 
 ```powershell
@@ -81,6 +83,34 @@ php artisan serve
 - `PUT/PATCH /api/bookings/{id}`
 - `DELETE /api/bookings/{id}`
 - `POST /api/bookings/{id}/check-in`
+
+## Branching Strategy
+
+- Gunakan `master` hanya untuk kode stabil dan hasil akhir tugas.
+- Kerjakan setiap fitur di cabang terpisah, misalnya `feature/api-auth`, `feature/equipment-crud`, `feature/booking-checkin`, atau `feature/notification-email`.
+- Buat commit kecil yang fokus pada satu perubahan, lalu merge ke `master` melalui pull request atau merge request.
+- Hindari bekerja langsung di `master` agar tim bisa menambahkan fitur email/notification tanpa mengganggu tugas utama.
+
+## Database Schema
+
+- `users`
+  - `id`, `name`, `email`, `role`, `api_token`, `password`, `remember_token`, `timestamps`
+  - menyimpan token API untuk autentikasi tablet.
+- `equipment`
+  - `id`, `code`, `name`, `category`, `quantity`, `condition`, `status`, `description`, `timestamps`
+  - inventory alat dengan status dan kuantitas.
+- `rooms`
+  - `id`, `name`, `location`, `capacity`, `status`, `description`, `timestamps`
+  - data ruang kerja/studio yang dapat dipesan.
+- `bookings`
+  - `id`, `user_id`, `equipment_id`, `room_id`, `start_time`, `end_time`, `purpose`, `status`, `check_in_at`, `timestamps`
+  - booking dapat terkait equipment atau room, lalu dilakukan check-in untuk memperbarui status.
+
+## API Details
+
+- Autentikasi API menggunakan token Bearer dari `api_token`.
+- Booking memvalidasi jadwal agar alat atau ruang tidak dibooking dua kali dalam periode yang sama.
+- `POST /api/bookings/{id}/check-in` mengubah status booking menjadi `checked_in` dan menyimpan waktu check-in.
 
 ## Catatan
 
