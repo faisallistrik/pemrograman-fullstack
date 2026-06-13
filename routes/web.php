@@ -14,5 +14,6 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('dashboard', [WebAuthController::class, 'dashboard'])->name('dashboard');
+    Route::post('transaction', [WebAuthController::class, 'storeTransaction'])->name('transaction.store');
     Route::post('logout', [WebAuthController::class, 'logout'])->name('logout');
 });
