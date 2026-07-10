@@ -1,0 +1,34 @@
+# Frontend
+Chips-Smart-Hub-Frontend/node_modules/
+Chips-Smart-Hub-Frontend/.env
+Chips-Smart-Hub-Frontend/.env.local
+Chips-Smart-Hub-Frontend/vendor/
+Chips-Smart-Hub-Frontend/storage/
+Chips-Smart-Hub-Frontend/bootstrap/cache/
+Chips-Smart-Hub-Frontend/build/
+Chips-Smart-Hub-Frontend/dist/
+
+# Backend
+Chips\ Smart-Hub\ Management\ System/node_modules/
+Chips\ Smart-Hub\ Management\ System/.env
+Chips\ Smart-Hub\ Management\ System/.env.local
+Chips\ Smart-Hub\ Management\ System/vendor/
+Chips\ Smart-Hub\ Management\ System/storage/
+Chips\ Smart-Hub\ Management\ System/bootstrap/cache/
+Chips\ Smart-Hub\ Management\ System/build/
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
