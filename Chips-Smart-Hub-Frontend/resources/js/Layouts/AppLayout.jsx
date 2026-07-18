@@ -10,6 +10,7 @@ export default function AppLayout({ children }) {
 
   const handleLogout = async () => {
     await logout()
+    document.cookie = 'api_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
     navigate('/login')
   }
 
