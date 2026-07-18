@@ -3,14 +3,25 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Equipment;
 use Illuminate\Http\Request;
 
 class EquipmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Equipment::orderBy('name')->get();
+        return Equipment::query()
+            ->when($request->query('search'), function ($query, $search) {
+                $needle = '%'.strtolower($search).'%';
+
+                $query->where(function ($query) use ($needle) {
+                    $query->whereRaw('LOWER(name) LIKE ?', [$needle])
+                        ->orWhereRaw('LOWER(code) LIKE ?', [$needle]);
+                });
+            })
+            ->orderBy('name')
+            ->paginate((int) $request->query('per_page', 15));
     }
 
     public function store(Request $request)
@@ -25,7 +36,11 @@ class EquipmentController extends Controller
             'description' => ['nullable', 'string'],
         ]);
 
-        return Equipment::create($data);
+        $equipment = Equipment::create($data);
+
+        ActivityLog::record($request->user(), 'created', $equipment, "Membuat equipment {$equipment->code} - {$equipment->name}.");
+
+        return $equipment;
     }
 
     public function show(Equipment $equipment)
@@ -47,11 +62,15 @@ class EquipmentController extends Controller
 
         $equipment->update($data);
 
+        ActivityLog::record($request->user(), 'updated', $equipment, "Memperbarui equipment {$equipment->code} - {$equipment->name}.");
+
         return $equipment;
     }
 
-    public function destroy(Equipment $equipment)
+    public function destroy(Request $request, Equipment $equipment)
     {
+        ActivityLog::record($request->user(), 'deleted', $equipment, "Menghapus equipment {$equipment->code} - {$equipment->name}.");
+
         $equipment->delete();
 
         return response()->json(['message' => 'Equipment berhasil dihapus.']);

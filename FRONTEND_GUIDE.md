@@ -1,4 +1,4 @@
-# Frontend Development - Complete Implementation Guide
+# Smart-Hub: Asset & Booking Management - Frontend Development Guide
 
 ## ✅ Phases Completed
 

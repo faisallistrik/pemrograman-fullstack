@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import AppLayout from '../Layouts/AppLayout'
+import Pagination from '../Components/Pagination'
 import bookingService from '../lib/bookingService'
 import equipmentService from '../lib/equipmentService'
 import roomService from '../lib/roomService'
@@ -14,6 +15,9 @@ export default function Bookings() {
   const [error, setError] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [filterStatus, setFilterStatus] = useState('all')
+  const [page, setPage] = useState(1)
+  const [lastPage, setLastPage] = useState(1)
+  const [total, setTotal] = useState(0)
   const [formData, setFormData] = useState({
     equipment_id: '',
     room_id: '',
@@ -22,30 +26,54 @@ export default function Bookings() {
     purpose: '',
   })
 
-  // Fetch data
+  // Fetch pickers (equipment/room) once — full list, not paginated
   useEffect(() => {
-    loadAllData()
+    loadPickers()
   }, [])
 
-  const loadAllData = async () => {
+  // Fetch bookings whenever filter/page changes
+  useEffect(() => {
+    loadBookings()
+  }, [filterStatus, page])
+
+  const loadPickers = async () => {
     try {
-      setLoading(true)
-      const [bookingsRes, equipmentRes, roomsRes] = await Promise.all([
-        bookingService.getAll(),
-        equipmentService.getAll(),
-        roomService.getAll(),
+      const [equipmentRes, roomsRes] = await Promise.all([
+        equipmentService.getAll({ per_page: 100 }),
+        roomService.getAll({ per_page: 100 }),
       ])
 
-      setBookingsList(Array.isArray(bookingsRes) ? bookingsRes : bookingsRes.data || [])
       setEquipment(Array.isArray(equipmentRes) ? equipmentRes : equipmentRes.data || [])
       setRooms(Array.isArray(roomsRes) ? roomsRes : roomsRes.data || [])
+    } catch (err) {
+      setError('Gagal memuat data equipment/ruangan')
+      console.error(err)
+    }
+  }
+
+  const loadBookings = async () => {
+    try {
+      setLoading(true)
+      const bookingsRes = await bookingService.getAll({
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        page,
+      })
+
+      setBookingsList(Array.isArray(bookingsRes) ? bookingsRes : bookingsRes.data || [])
+      setLastPage(bookingsRes.last_page || 1)
+      setTotal(bookingsRes.total ?? (Array.isArray(bookingsRes) ? bookingsRes.length : 0))
       setError('')
     } catch (err) {
-      setError('Gagal memuat data')
+      setError('Gagal memuat data booking')
       console.error(err)
     } finally {
       setLoading(false)
     }
+  }
+
+  const loadAllData = () => {
+    loadPickers()
+    loadBookings()
   }
 
   const handleFormChange = (e) => {
@@ -55,9 +83,17 @@ export default function Bookings() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    if (!formData.equipment_id && !formData.room_id) {
+      setError('Pilih minimal salah satu: Equipment atau Ruangan.')
+      return
+    }
+
     try {
       await bookingService.create({
         ...formData,
+        equipment_id: formData.equipment_id || null,
+        room_id: formData.room_id || null,
         user_id: user?.id,
       })
       setFormData({
@@ -131,11 +167,6 @@ export default function Bookings() {
     return rooms.find((r) => r.id === id)?.name || '-'
   }
 
-  const filteredBookings =
-    filterStatus === 'all'
-      ? bookingsList
-      : bookingsList.filter((b) => b.status === filterStatus)
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('id-ID', {
       dateStyle: 'short',
@@ -184,7 +215,10 @@ export default function Bookings() {
           {['all', 'pending', 'approved', 'checked_in', 'completed', 'cancelled'].map((status) => (
             <button
               key={status}
-              onClick={() => setFilterStatus(status)}
+              onClick={() => {
+                setPage(1)
+                setFilterStatus(status)
+              }}
               className={`px-4 py-2 rounded-lg transition ${
                 filterStatus === status
                   ? 'bg-indigo-600 text-white'
@@ -202,13 +236,13 @@ export default function Bookings() {
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
             <p className="mt-4 text-gray-600">Loading...</p>
           </div>
-        ) : filteredBookings.length === 0 ? (
+        ) : bookingsList.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg">
             <p className="text-gray-600">Belum ada booking</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {filteredBookings.map((booking) => (
+            {bookingsList.map((booking) => (
               <div key={booking.id} className="bg-white rounded-lg shadow p-6">
                 <div className="mb-3 flex justify-between items-start">
                   <div>
@@ -296,6 +330,8 @@ export default function Bookings() {
           </div>
         )}
 
+        <Pagination currentPage={page} lastPage={lastPage} total={total} onPageChange={setPage} />
+
         {/* Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -303,6 +339,8 @@ export default function Bookings() {
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Buat Booking</h2>
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                <p className="text-xs text-gray-500 -mb-2">Pilih minimal salah satu: Equipment atau Ruangan.</p>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Equipment
@@ -312,9 +350,8 @@ export default function Bookings() {
                     value={formData.equipment_id}
                     onChange={handleFormChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                    required
                   >
-                    <option value="">Pilih Equipment</option>
+                    <option value="">Tidak perlu equipment</option>
                     {equipment.map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.name} ({item.code})
@@ -332,9 +369,8 @@ export default function Bookings() {
                     value={formData.room_id}
                     onChange={handleFormChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                    required
                   >
-                    <option value="">Pilih Ruangan</option>
+                    <option value="">Tidak perlu ruangan</option>
                     {rooms.map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.name} ({item.location})

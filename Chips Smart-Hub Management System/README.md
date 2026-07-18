@@ -1,4 +1,4 @@
-# Chips Smart-Hub Management System
+# Smart-Hub: Asset & Booking Management (Backend API)
 
 A Laravel-based backend for managing room reservations, equipment inventory, and check-in status via API.
 

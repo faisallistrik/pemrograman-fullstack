@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EquipmentController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Middleware\EnsureApiTokenIsValid;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +19,7 @@ Route::post('reset-password', [AuthController::class, 'resetPassword']);
 Route::middleware([EnsureApiTokenIsValid::class])->group(function () {
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
+    Route::get('dashboard/stats', [DashboardController::class, 'stats']);
 
     Route::apiResource('equipment', EquipmentController::class)
         ->middlewareFor(['store', 'update', 'destroy'], 'admin');
@@ -27,4 +31,10 @@ Route::middleware([EnsureApiTokenIsValid::class])->group(function () {
     Route::post('bookings/{booking}/complete', [BookingController::class, 'complete']);
     Route::post('bookings/{booking}/approve', [BookingController::class, 'approve'])->middleware('admin');
     Route::post('bookings/{booking}/reject', [BookingController::class, 'reject'])->middleware('admin');
+
+    Route::get('activity-logs', [ActivityLogController::class, 'index'])->middleware('admin');
+
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
 });

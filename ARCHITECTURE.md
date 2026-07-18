@@ -1,8 +1,8 @@
-# Smart-Hub Management System - Complete Architecture & Deployment Guide
+# Smart-Hub: Asset & Booking Management - Complete Architecture & Deployment Guide
 
 ## 📊 System Overview
 
-**Smart-Hub** adalah sistem manajemen terintegrasi untuk mengelola peminjaman ruangan, inventaris peralatan, dan status check-in melalui API modern.
+**Smart-Hub: Asset & Booking Management** adalah sistem manajemen terintegrasi untuk mengelola peminjaman ruangan, inventaris peralatan (asset), dan status check-in melalui API modern.
 
 ### Monorepo Structure
 ```

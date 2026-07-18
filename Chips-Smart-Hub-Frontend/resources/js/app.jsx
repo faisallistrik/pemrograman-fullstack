@@ -15,6 +15,7 @@ import Dashboard from './Pages/Dashboard'
 import Equipment from './Pages/Equipment'
 import Rooms from './Pages/Rooms'
 import Bookings from './Pages/Bookings'
+import ActivityLog from './Pages/ActivityLog'
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/equipment" element={<AdminRoute><Equipment /></AdminRoute>} />
           <Route path="/rooms" element={<AdminRoute><Rooms /></AdminRoute>} />
+          <Route path="/activity-logs" element={<AdminRoute><ActivityLog /></AdminRoute>} />
           <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         </Routes>

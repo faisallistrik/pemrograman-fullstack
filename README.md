@@ -1,6 +1,6 @@
-# Chips Smart-Hub Management System - Monorepo
+# Smart-Hub: Asset & Booking Management
 
-Complete system untuk mengelola peminjaman ruangan, inventaris peralatan, dan status check-in melalui API.
+Monorepo Chips Smart-Hub Management System — sistem untuk mengelola peminjaman ruangan, inventaris peralatan (asset), dan status check-in melalui API.
 
 ## 📁 Struktur Proyek
 

@@ -3,9 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\Equipment;
 use App\Models\Room;
+use App\Models\User;
+use App\Notifications\BookingApproved;
+use App\Notifications\BookingRejected;
+use App\Notifications\NewBookingPending;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
@@ -17,8 +22,11 @@ class BookingController extends Controller
         return Booking::with(['user', 'equipment', 'room'])
             ->when(! $request->user()->isAdmin(), fn ($query) => $query->where('user_id', $request->user()->id))
             ->when($request->query('status'), fn ($query, $status) => $query->where('status', $status))
+            ->when($request->query('search'), function ($query, $search) {
+                $query->whereRaw('LOWER(purpose) LIKE ?', ['%'.strtolower($search).'%']);
+            })
             ->orderByDesc('start_time')
-            ->get();
+            ->paginate((int) $request->query('per_page', 15));
     }
 
     public function store(Request $request)
@@ -46,7 +54,13 @@ class BookingController extends Controller
         $data['user_id'] = $request->user()->id;
         $data['status'] = 'pending';
 
-        return Booking::create($data);
+        $booking = Booking::create($data)->load(['user', 'equipment', 'room']);
+
+        ActivityLog::record($request->user(), 'created', $booking, "Membuat booking #{$booking->id} ({$booking->purpose}).");
+
+        User::where('role', 'admin')->get()->each->notify(new NewBookingPending($booking));
+
+        return $booking;
     }
 
     public function show(Request $request, Booking $booking)
@@ -103,6 +117,8 @@ class BookingController extends Controller
 
         $booking->update($data);
 
+        ActivityLog::record($request->user(), 'updated', $booking, "Memperbarui booking #{$booking->id}.");
+
         return $booking->load(['user', 'equipment', 'room']);
     }
 
@@ -111,6 +127,8 @@ class BookingController extends Controller
         if ($response = $this->ensureOwnership($request, $booking)) {
             return $response;
         }
+
+        ActivityLog::record($request->user(), 'deleted', $booking, "Menghapus booking #{$booking->id} ({$booking->purpose}).");
 
         $booking->delete();
 
@@ -125,6 +143,10 @@ class BookingController extends Controller
 
         $booking->update(['status' => 'approved']);
 
+        ActivityLog::record($request->user(), 'approved', $booking, "Menyetujui booking #{$booking->id}.");
+
+        $booking->user->notify(new BookingApproved($booking));
+
         return $booking->load(['user', 'equipment', 'room']);
     }
 
@@ -135,6 +157,10 @@ class BookingController extends Controller
         }
 
         $booking->update(['status' => 'cancelled']);
+
+        ActivityLog::record($request->user(), 'rejected', $booking, "Menolak/membatalkan booking #{$booking->id}.");
+
+        $booking->user->notify(new BookingRejected($booking));
 
         return $booking->load(['user', 'equipment', 'room']);
     }
@@ -156,6 +182,8 @@ class BookingController extends Controller
 
         $this->syncResourceStatus($booking, 'Dipinjam', 'Sedang Digunakan');
 
+        ActivityLog::record($request->user(), 'checked_in', $booking, "Check-in booking #{$booking->id}.");
+
         return $booking->load(['user', 'equipment', 'room']);
     }
 
@@ -172,6 +200,8 @@ class BookingController extends Controller
         $booking->update(['status' => 'completed']);
 
         $this->syncResourceStatus($booking, 'Tersedia', 'Tersedia');
+
+        ActivityLog::record($request->user(), 'completed', $booking, "Menyelesaikan/mengembalikan booking #{$booking->id}.");
 
         return $booking->load(['user', 'equipment', 'room']);
     }

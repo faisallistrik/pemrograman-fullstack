@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import AppLayout from '../Layouts/AppLayout'
+import Pagination from '../Components/Pagination'
 import roomService from '../lib/roomService'
 
 export default function Rooms() {
@@ -15,17 +16,23 @@ export default function Rooms() {
     description: '',
   })
   const [searchTerm, setSearchTerm] = useState('')
+  const [page, setPage] = useState(1)
+  const [lastPage, setLastPage] = useState(1)
+  const [total, setTotal] = useState(0)
 
-  // Fetch rooms list
+  // Fetch rooms list (server-side search + pagination)
   useEffect(() => {
-    loadRooms()
-  }, [])
+    const timeout = setTimeout(() => loadRooms(), 300)
+    return () => clearTimeout(timeout)
+  }, [searchTerm, page])
 
   const loadRooms = async () => {
     try {
       setLoading(true)
-      const response = await roomService.getAll()
+      const response = await roomService.getAll({ search: searchTerm || undefined, page })
       setRoomsList(Array.isArray(response) ? response : response.data || [])
+      setLastPage(response.last_page || 1)
+      setTotal(response.total ?? (Array.isArray(response) ? response.length : 0))
       setError('')
     } catch (err) {
       setError('Gagal memuat data ruangan')
@@ -69,12 +76,6 @@ export default function Rooms() {
     }
   }
 
-  const filteredRooms = roomsList.filter(
-    (item) =>
-      item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.location?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -101,7 +102,10 @@ export default function Rooms() {
             type="text"
             placeholder="Cari berdasarkan nama atau lokasi..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setPage(1)
+              setSearchTerm(e.target.value)
+            }}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
           />
         </div>
@@ -112,13 +116,13 @@ export default function Rooms() {
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
             <p className="mt-4 text-gray-600">Loading...</p>
           </div>
-        ) : filteredRooms.length === 0 ? (
+        ) : roomsList.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg">
             <p className="text-gray-600">Belum ada ruangan</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredRooms.map((item) => (
+            {roomsList.map((item) => (
               <div key={item.id} className="bg-white rounded-lg shadow p-6 hover:shadow-md transition">
                 <div className="mb-3">
                   <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
@@ -158,6 +162,8 @@ export default function Rooms() {
             ))}
           </div>
         )}
+
+        <Pagination currentPage={page} lastPage={lastPage} total={total} onPageChange={setPage} />
 
         {/* Modal */}
         {showModal && (

@@ -44,12 +44,35 @@ class BookingWorkflowTest extends TestCase
 
         $bookingId = $createResponse->json('id');
 
+        $admin = User::factory()->admin()->create(['api_token' => Str::random(80)]);
+
+        $this->withHeader('Authorization', 'Bearer ' . $admin->api_token)
+            ->postJson("/api/bookings/{$bookingId}/approve")
+            ->assertStatus(200)
+            ->assertJsonPath('status', 'approved');
+
         $checkInResponse = $this->withHeader('Authorization', 'Bearer ' . $user->api_token)
             ->postJson("/api/bookings/{$bookingId}/check-in");
 
         $checkInResponse->assertStatus(200)
             ->assertJsonPath('status', 'checked_in')
             ->assertJsonStructure(['id', 'check_in_at']);
+
+        $this->assertDatabaseHas('equipment', [
+            'id' => $equipment->id,
+            'status' => 'Dipinjam',
+        ]);
+
+        $completeResponse = $this->withHeader('Authorization', 'Bearer ' . $user->api_token)
+            ->postJson("/api/bookings/{$bookingId}/complete");
+
+        $completeResponse->assertStatus(200)
+            ->assertJsonPath('status', 'completed');
+
+        $this->assertDatabaseHas('equipment', [
+            'id' => $equipment->id,
+            'status' => 'Tersedia',
+        ]);
     }
 
     public function test_booking_overlap_is_prevented_for_same_equipment(): void

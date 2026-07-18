@@ -3,14 +3,25 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Room;
 use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Room::orderBy('name')->get();
+        return Room::query()
+            ->when($request->query('search'), function ($query, $search) {
+                $needle = '%'.strtolower($search).'%';
+
+                $query->where(function ($query) use ($needle) {
+                    $query->whereRaw('LOWER(name) LIKE ?', [$needle])
+                        ->orWhereRaw('LOWER(location) LIKE ?', [$needle]);
+                });
+            })
+            ->orderBy('name')
+            ->paginate((int) $request->query('per_page', 15));
     }
 
     public function store(Request $request)
@@ -23,7 +34,11 @@ class RoomController extends Controller
             'description' => ['nullable', 'string'],
         ]);
 
-        return Room::create($data);
+        $room = Room::create($data);
+
+        ActivityLog::record($request->user(), 'created', $room, "Membuat ruangan {$room->name}.");
+
+        return $room;
     }
 
     public function show(Room $room)
@@ -43,11 +58,15 @@ class RoomController extends Controller
 
         $room->update($data);
 
+        ActivityLog::record($request->user(), 'updated', $room, "Memperbarui ruangan {$room->name}.");
+
         return $room;
     }
 
-    public function destroy(Room $room)
+    public function destroy(Request $request, Room $room)
     {
+        ActivityLog::record($request->user(), 'deleted', $room, "Menghapus ruangan {$room->name}.");
+
         $room->delete();
 
         return response()->json(['message' => 'Ruang berhasil dihapus.']);
