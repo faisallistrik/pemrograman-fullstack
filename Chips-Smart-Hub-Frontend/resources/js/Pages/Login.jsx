@@ -1,10 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import GuestLayout from '../Layouts/GuestLayout'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Login() {
-  const navigate = useNavigate()
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -17,8 +15,12 @@ export default function Login() {
     setLoading(true)
 
     try {
-      await login(email, password)
-      navigate('/dashboard')
+      const { token } = await login(email, password)
+      // Dashboard is server-rendered via Inertia, so it needs the token
+      // available to the Laravel backend (cookie) — a full navigation
+      // (not client-side routing) is required to actually hit that route.
+      document.cookie = `api_token=${token}; path=/;`
+      window.location.href = '/dashboard'
     } catch (err) {
       const message = err.response?.data?.message || 'Login gagal. Periksa email dan password Anda.'
       setError(message)
