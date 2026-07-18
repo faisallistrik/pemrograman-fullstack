@@ -1,4 +1,6 @@
+```
 DATABASE_URL=postgresql://postgres.qdekqugmkqqgwjhhvkdz:Zulfiq%40r%261453@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
+```
 
 # Smart-Hub: Asset & Booking Management
 
