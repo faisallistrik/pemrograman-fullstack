@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Equipment;
+use App\Models\Room;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
 
 class BookingController extends Controller
@@ -13,6 +15,7 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         return Booking::with(['user', 'equipment', 'room'])
+            ->when(! $request->user()->isAdmin(), fn ($query) => $query->where('user_id', $request->user()->id))
             ->when($request->query('status'), fn ($query, $status) => $query->where('status', $status))
             ->orderByDesc('start_time')
             ->get();
@@ -46,20 +49,31 @@ class BookingController extends Controller
         return Booking::create($data);
     }
 
-    public function show(Booking $booking)
+    public function show(Request $request, Booking $booking)
     {
+        if ($response = $this->ensureOwnership($request, $booking)) {
+            return $response;
+        }
+
         return $booking->load(['user', 'equipment', 'room']);
     }
 
     public function update(Request $request, Booking $booking)
     {
+        if ($response = $this->ensureOwnership($request, $booking)) {
+            return $response;
+        }
+
+        if (! in_array($booking->status, ['pending', 'approved'], true)) {
+            return response()->json(['message' => 'Booking hanya dapat diubah selama berstatus pending atau approved.'], 422);
+        }
+
         $data = $request->validate([
             'equipment_id' => ['nullable', 'exists:equipment,id'],
             'room_id' => ['nullable', 'exists:rooms,id'],
             'start_time' => ['sometimes', 'date', 'after_or_equal:now'],
             'end_time' => ['sometimes', 'date'],
             'purpose' => ['sometimes', 'string', 'max:255'],
-            'status' => ['nullable', 'in:pending,approved,checked_in,completed,cancelled'],
         ]);
 
         $startTime = $data['start_time'] ?? $booking->start_time->toDateTimeString();
@@ -92,21 +106,47 @@ class BookingController extends Controller
         return $booking->load(['user', 'equipment', 'room']);
     }
 
-    public function destroy(Booking $booking)
+    public function destroy(Request $request, Booking $booking)
     {
+        if ($response = $this->ensureOwnership($request, $booking)) {
+            return $response;
+        }
+
         $booking->delete();
 
         return response()->json(['message' => 'Booking berhasil dihapus.']);
     }
 
-    public function checkIn(Booking $booking)
+    public function approve(Request $request, Booking $booking)
     {
-        if (in_array($booking->status, ['cancelled', 'completed'], true)) {
-            return response()->json(['message' => 'Booking tidak dapat di-check-in karena status sudah dibatalkan atau selesai.'], 422);
+        if ($booking->status !== 'pending') {
+            return response()->json(['message' => 'Hanya booking berstatus pending yang dapat disetujui.'], 422);
         }
 
-        if ($booking->status === 'checked_in') {
-            return response()->json(['message' => 'Booking sudah check-in.'], 422);
+        $booking->update(['status' => 'approved']);
+
+        return $booking->load(['user', 'equipment', 'room']);
+    }
+
+    public function reject(Request $request, Booking $booking)
+    {
+        if (! in_array($booking->status, ['pending', 'approved'], true)) {
+            return response()->json(['message' => 'Booking ini tidak dapat ditolak/dibatalkan.'], 422);
+        }
+
+        $booking->update(['status' => 'cancelled']);
+
+        return $booking->load(['user', 'equipment', 'room']);
+    }
+
+    public function checkIn(Request $request, Booking $booking)
+    {
+        if ($response = $this->ensureOwnership($request, $booking)) {
+            return $response;
+        }
+
+        if ($booking->status !== 'approved') {
+            return response()->json(['message' => 'Booking harus disetujui (approved) admin sebelum dapat di-check-in.'], 422);
         }
 
         $booking->update([
@@ -114,7 +154,46 @@ class BookingController extends Controller
             'check_in_at' => Carbon::now(),
         ]);
 
+        $this->syncResourceStatus($booking, 'Dipinjam', 'Sedang Digunakan');
+
         return $booking->load(['user', 'equipment', 'room']);
+    }
+
+    public function complete(Request $request, Booking $booking)
+    {
+        if ($response = $this->ensureOwnership($request, $booking)) {
+            return $response;
+        }
+
+        if ($booking->status !== 'checked_in') {
+            return response()->json(['message' => 'Hanya booking berstatus checked-in yang dapat diselesaikan.'], 422);
+        }
+
+        $booking->update(['status' => 'completed']);
+
+        $this->syncResourceStatus($booking, 'Tersedia', 'Tersedia');
+
+        return $booking->load(['user', 'equipment', 'room']);
+    }
+
+    private function ensureOwnership(Request $request, Booking $booking): ?JsonResponse
+    {
+        if (! $request->user()->isAdmin() && $booking->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Anda tidak memiliki akses ke booking ini.'], 403);
+        }
+
+        return null;
+    }
+
+    private function syncResourceStatus(Booking $booking, string $equipmentStatus, string $roomStatus): void
+    {
+        if ($booking->equipment_id) {
+            Equipment::whereKey($booking->equipment_id)->update(['status' => $equipmentStatus]);
+        }
+
+        if ($booking->room_id) {
+            Room::whereKey($booking->room_id)->update(['status' => $roomStatus]);
+        }
     }
 
     private function ensureBookingAvailability(array $data, ?int $bookingId = null)

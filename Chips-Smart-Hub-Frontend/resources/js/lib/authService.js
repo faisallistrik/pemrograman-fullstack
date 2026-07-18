@@ -55,6 +55,23 @@ const authService = {
     localStorage.removeItem('auth_user')
   },
 
+  // Request password reset
+  forgotPassword: async (email) => {
+    const response = await apiClient.post('/forgot-password', { email })
+    return response.data
+  },
+
+  // Reset password with token
+  resetPassword: async (email, token, password, password_confirmation) => {
+    const response = await apiClient.post('/reset-password', {
+      email,
+      token,
+      password,
+      password_confirmation,
+    })
+    return response.data
+  },
+
   // Verify token
   verifyToken: async () => {
     try {

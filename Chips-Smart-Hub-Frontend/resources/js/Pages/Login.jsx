@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GuestLayout from '../Layouts/GuestLayout'
-import authService from '../lib/authService'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Login() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -16,7 +17,7 @@ export default function Login() {
     setLoading(true)
 
     try {
-      await authService.login(email, password)
+      await login(email, password)
       navigate('/dashboard')
     } catch (err) {
       const message = err.response?.data?.message || 'Login gagal. Periksa email dan password Anda.'
@@ -55,9 +56,14 @@ export default function Login() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Password
-          </label>
+          <div className="flex justify-between items-center mb-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <a href="/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+              Lupa password?
+            </a>
+          </div>
           <input
             type="password"
             value={password}
@@ -88,7 +94,7 @@ export default function Login() {
       {/* Demo Credentials */}
       <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
         <p className="font-semibold mb-2">Demo Credentials:</p>
-        <p>Email: admin@example.com</p>
+        <p>Email: admin@smart-hub.local</p>
         <p>Password: password</p>
       </div>
     </GuestLayout>

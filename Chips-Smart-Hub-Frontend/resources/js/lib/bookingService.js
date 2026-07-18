@@ -36,6 +36,24 @@ const bookingService = {
     const response = await apiClient.post(`/bookings/${id}/check-in`)
     return response.data
   },
+
+  // Approve booking (admin)
+  approve: async (id) => {
+    const response = await apiClient.post(`/bookings/${id}/approve`)
+    return response.data
+  },
+
+  // Reject/cancel booking (admin)
+  reject: async (id) => {
+    const response = await apiClient.post(`/bookings/${id}/reject`)
+    return response.data
+  },
+
+  // Mark booking as completed / returned
+  complete: async (id) => {
+    const response = await apiClient.post(`/bookings/${id}/complete`)
+    return response.data
+  },
 }
 
 export default bookingService

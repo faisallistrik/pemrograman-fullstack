@@ -54,12 +54,16 @@ export default function AppLayout({ children }) {
             <a href="/dashboard" className="block px-4 py-2 rounded-md hover:bg-indigo-50 text-gray-700 hover:text-indigo-600 transition">
               Dashboard
             </a>
-            <a href="/equipment" className="block px-4 py-2 rounded-md hover:bg-indigo-50 text-gray-700 hover:text-indigo-600 transition">
-              Equipment
-            </a>
-            <a href="/rooms" className="block px-4 py-2 rounded-md hover:bg-indigo-50 text-gray-700 hover:text-indigo-600 transition">
-              Rooms
-            </a>
+            {user?.role === 'admin' && (
+              <>
+                <a href="/equipment" className="block px-4 py-2 rounded-md hover:bg-indigo-50 text-gray-700 hover:text-indigo-600 transition">
+                  Equipment
+                </a>
+                <a href="/rooms" className="block px-4 py-2 rounded-md hover:bg-indigo-50 text-gray-700 hover:text-indigo-600 transition">
+                  Rooms
+                </a>
+              </>
+            )}
             <a href="/bookings" className="block px-4 py-2 rounded-md hover:bg-indigo-50 text-gray-700 hover:text-indigo-600 transition">
               Bookings
             </a>

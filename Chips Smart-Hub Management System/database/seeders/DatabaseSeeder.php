@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'member@smart-hub.local'],
             [
                 'name' => 'Member Smart Hub',
-                'role' => 'user',
+                'role' => 'member',
                 'api_token' => Str::random(80),
                 'password' => 'password',
             ]

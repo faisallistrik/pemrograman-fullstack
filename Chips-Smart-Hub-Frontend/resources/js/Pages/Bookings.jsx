@@ -79,7 +79,36 @@ export default function Bookings() {
       await bookingService.checkIn(id)
       loadAllData()
     } catch (err) {
-      setError('Gagal check-in')
+      setError(err.response?.data?.message || 'Gagal check-in')
+    }
+  }
+
+  const handleApprove = async (id) => {
+    try {
+      await bookingService.approve(id)
+      loadAllData()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal menyetujui booking')
+    }
+  }
+
+  const handleReject = async (id) => {
+    if (window.confirm('Tolak/batalkan booking ini?')) {
+      try {
+        await bookingService.reject(id)
+        loadAllData()
+      } catch (err) {
+        setError(err.response?.data?.message || 'Gagal menolak booking')
+      }
+    }
+  }
+
+  const handleComplete = async (id) => {
+    try {
+      await bookingService.complete(id)
+      loadAllData()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal menyelesaikan booking')
     }
   }
 
@@ -114,6 +143,22 @@ export default function Bookings() {
     })
   }
 
+  const statusLabels = {
+    pending: 'Pending',
+    approved: 'Disetujui',
+    checked_in: 'Checked-in',
+    completed: 'Selesai',
+    cancelled: 'Dibatalkan',
+  }
+
+  const statusBadgeClass = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    approved: 'bg-purple-100 text-purple-800',
+    checked_in: 'bg-blue-100 text-blue-800',
+    completed: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800',
+  }
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -136,7 +181,7 @@ export default function Bookings() {
 
         {/* Filters */}
         <div className="flex gap-2 flex-wrap">
-          {['all', 'pending', 'checked_in', 'completed'].map((status) => (
+          {['all', 'pending', 'approved', 'checked_in', 'completed', 'cancelled'].map((status) => (
             <button
               key={status}
               onClick={() => setFilterStatus(status)}
@@ -146,7 +191,7 @@ export default function Bookings() {
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
-              {status === 'all' ? 'Semua' : status === 'pending' ? 'Pending' : status === 'checked_in' ? 'Checked-in' : 'Selesai'}
+              {status === 'all' ? 'Semua' : statusLabels[status]}
             </button>
           ))}
         </div>
@@ -173,19 +218,9 @@ export default function Bookings() {
                     <p className="text-sm text-gray-500">{booking.purpose}</p>
                   </div>
                   <span
-                    className={`px-3 py-1 rounded text-xs font-medium ${
-                      booking.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : booking.status === 'checked_in'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-green-100 text-green-800'
-                    }`}
+                    className={`px-3 py-1 rounded text-xs font-medium ${statusBadgeClass[booking.status] || 'bg-gray-100 text-gray-800'}`}
                   >
-                    {booking.status === 'pending'
-                      ? 'Pending'
-                      : booking.status === 'checked_in'
-                      ? 'Checked-in'
-                      : 'Selesai'}
+                    {statusLabels[booking.status] || booking.status}
                   </span>
                 </div>
 
@@ -214,21 +249,47 @@ export default function Bookings() {
                   )}
                 </div>
 
-                <div className="flex gap-2">
-                  {booking.status === 'pending' && (
+                <div className="flex gap-2 flex-wrap">
+                  {booking.status === 'pending' && user?.role === 'admin' && (
+                    <>
+                      <button
+                        onClick={() => handleApprove(booking.id)}
+                        className="flex-1 bg-purple-50 text-purple-600 py-2 rounded hover:bg-purple-100 transition text-sm font-medium"
+                      >
+                        Setujui
+                      </button>
+                      <button
+                        onClick={() => handleReject(booking.id)}
+                        className="flex-1 bg-red-50 text-red-600 py-2 rounded hover:bg-red-100 transition text-sm font-medium"
+                      >
+                        Tolak
+                      </button>
+                    </>
+                  )}
+                  {booking.status === 'approved' && (
                     <button
                       onClick={() => handleCheckIn(booking.id)}
-                      className="flex-1 bg-green-50 text-green-600 py-2 rounded hover:bg-green-100 transition text-sm font-medium"
+                      className="flex-1 bg-blue-50 text-blue-600 py-2 rounded hover:bg-blue-100 transition text-sm font-medium"
                     >
                       Check-in
                     </button>
                   )}
-                  <button
-                    onClick={() => handleDelete(booking.id)}
-                    className="flex-1 bg-red-50 text-red-600 py-2 rounded hover:bg-red-100 transition text-sm font-medium"
-                  >
-                    Hapus
-                  </button>
+                  {booking.status === 'checked_in' && (
+                    <button
+                      onClick={() => handleComplete(booking.id)}
+                      className="flex-1 bg-green-50 text-green-600 py-2 rounded hover:bg-green-100 transition text-sm font-medium"
+                    >
+                      Selesai / Kembalikan
+                    </button>
+                  )}
+                  {!['completed', 'cancelled'].includes(booking.status) && (
+                    <button
+                      onClick={() => handleDelete(booking.id)}
+                      className="flex-1 bg-gray-100 text-gray-600 py-2 rounded hover:bg-gray-200 transition text-sm font-medium"
+                    >
+                      Hapus
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
