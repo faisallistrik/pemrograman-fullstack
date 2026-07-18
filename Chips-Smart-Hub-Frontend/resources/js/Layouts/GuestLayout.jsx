@@ -1,13 +1,16 @@
+import Logo from '../Components/Logo'
+import ThemeToggle from '../Components/ThemeToggle'
+
 export default function GuestLayout({ children }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-surface to-primary/10 dark:from-ink dark:to-ink-soft px-4 sm:px-6 lg:px-8">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-indigo-600">
-              Smart-Hub
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">Asset & Booking Management</p>
+        <div className="bg-white dark:bg-ink-soft rounded-lg shadow-lg p-8">
+          <div className="flex justify-center mb-8">
+            <Logo className="h-10" />
           </div>
           {children}
         </div>

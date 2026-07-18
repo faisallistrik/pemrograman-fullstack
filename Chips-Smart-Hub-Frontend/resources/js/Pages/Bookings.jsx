@@ -183,11 +183,11 @@ export default function Bookings() {
   }
 
   const statusBadgeClass = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    approved: 'bg-purple-100 text-purple-800',
-    checked_in: 'bg-blue-100 text-blue-800',
-    completed: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800',
+    pending: 'bg-warning/10 text-warning',
+    approved: 'bg-info/10 text-info',
+    checked_in: 'bg-primary/10 text-primary dark:text-primary-dark',
+    completed: 'bg-primary/10 text-primary dark:text-primary-dark',
+    cancelled: 'bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400',
   }
 
   return (
@@ -195,17 +195,17 @@ export default function Bookings() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <h1 className="text-3xl font-bold text-gray-900">Bookings Management</h1>
+          <h1 className="text-3xl font-heading font-extrabold text-ink dark:text-white">Bookings Management</h1>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition"
           >
             + Buat Booking
           </button>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="bg-red-50 border border-red-200 text-red-700 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-400 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
@@ -221,8 +221,8 @@ export default function Bookings() {
               }}
               className={`px-4 py-2 rounded-lg transition ${
                 filterStatus === status
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10'
               }`}
             >
               {status === 'all' ? 'Semua' : statusLabels[status]}
@@ -233,23 +233,23 @@ export default function Bookings() {
         {/* Bookings List */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
           </div>
         ) : bookingsList.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg">
-            <p className="text-gray-600">Belum ada booking</p>
+          <div className="text-center py-12 bg-white dark:bg-ink-soft rounded-lg">
+            <p className="text-gray-600 dark:text-gray-400">Belum ada booking</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {bookingsList.map((booking) => (
-              <div key={booking.id} className="bg-white rounded-lg shadow p-6">
+              <div key={booking.id} className="bg-white dark:bg-ink-soft rounded-lg shadow p-6">
                 <div className="mb-3 flex justify-between items-start">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-ink dark:text-white">
                       Booking #{booking.id}
                     </h3>
-                    <p className="text-sm text-gray-500">{booking.purpose}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{booking.purpose}</p>
                   </div>
                   <span
                     className={`px-3 py-1 rounded text-xs font-medium ${statusBadgeClass[booking.status] || 'bg-gray-100 text-gray-800'}`}
@@ -260,25 +260,25 @@ export default function Bookings() {
 
                 <div className="space-y-2 text-sm mb-4">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Equipment:</span>
-                    <span className="font-medium">{getEquipmentName(booking.equipment_id)}</span>
+                    <span className="text-gray-600 dark:text-gray-400">Equipment:</span>
+                    <span className="font-medium text-ink dark:text-white">{getEquipmentName(booking.equipment_id)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Ruangan:</span>
-                    <span className="font-medium">{getRoomName(booking.room_id)}</span>
+                    <span className="text-gray-600 dark:text-gray-400">Ruangan:</span>
+                    <span className="font-medium text-ink dark:text-white">{getRoomName(booking.room_id)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Mulai:</span>
-                    <span className="font-medium">{formatDate(booking.start_time)}</span>
+                    <span className="text-gray-600 dark:text-gray-400">Mulai:</span>
+                    <span className="font-medium text-ink dark:text-white">{formatDate(booking.start_time)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Selesai:</span>
-                    <span className="font-medium">{formatDate(booking.end_time)}</span>
+                    <span className="text-gray-600 dark:text-gray-400">Selesai:</span>
+                    <span className="font-medium text-ink dark:text-white">{formatDate(booking.end_time)}</span>
                   </div>
                   {booking.check_in_at && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Check-in:</span>
-                      <span className="font-medium">{formatDate(booking.check_in_at)}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Check-in:</span>
+                      <span className="font-medium text-ink dark:text-white">{formatDate(booking.check_in_at)}</span>
                     </div>
                   )}
                 </div>
@@ -288,13 +288,13 @@ export default function Bookings() {
                     <>
                       <button
                         onClick={() => handleApprove(booking.id)}
-                        className="flex-1 bg-purple-50 text-purple-600 py-2 rounded hover:bg-purple-100 transition text-sm font-medium"
+                        className="flex-1 bg-info/10 text-info py-2 rounded hover:bg-info/20 transition text-sm font-medium"
                       >
                         Setujui
                       </button>
                       <button
                         onClick={() => handleReject(booking.id)}
-                        className="flex-1 bg-red-50 text-red-600 py-2 rounded hover:bg-red-100 transition text-sm font-medium"
+                        className="flex-1 bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 py-2 rounded hover:bg-red-100 dark:hover:bg-red-500/20 transition text-sm font-medium"
                       >
                         Tolak
                       </button>
@@ -303,7 +303,7 @@ export default function Bookings() {
                   {booking.status === 'approved' && (
                     <button
                       onClick={() => handleCheckIn(booking.id)}
-                      className="flex-1 bg-blue-50 text-blue-600 py-2 rounded hover:bg-blue-100 transition text-sm font-medium"
+                      className="flex-1 bg-info/10 text-info py-2 rounded hover:bg-info/20 transition text-sm font-medium"
                     >
                       Check-in
                     </button>
@@ -311,7 +311,7 @@ export default function Bookings() {
                   {booking.status === 'checked_in' && (
                     <button
                       onClick={() => handleComplete(booking.id)}
-                      className="flex-1 bg-green-50 text-green-600 py-2 rounded hover:bg-green-100 transition text-sm font-medium"
+                      className="flex-1 bg-primary/10 text-primary dark:text-primary-dark py-2 rounded hover:bg-primary/20 transition text-sm font-medium"
                     >
                       Selesai / Kembalikan
                     </button>
@@ -319,7 +319,7 @@ export default function Bookings() {
                   {!['completed', 'cancelled'].includes(booking.status) && (
                     <button
                       onClick={() => handleDelete(booking.id)}
-                      className="flex-1 bg-gray-100 text-gray-600 py-2 rounded hover:bg-gray-200 transition text-sm font-medium"
+                      className="flex-1 bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300 py-2 rounded hover:bg-gray-200 dark:hover:bg-white/10 transition text-sm font-medium"
                     >
                       Hapus
                     </button>
@@ -334,22 +334,22 @@ export default function Bookings() {
 
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Buat Booking</h2>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-ink-soft rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h2 className="text-2xl font-heading font-bold text-ink dark:text-white mb-4">Buat Booking</h2>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <p className="text-xs text-gray-500 -mb-2">Pilih minimal salah satu: Equipment atau Ruangan.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 -mb-2">Pilih minimal salah satu: Equipment atau Ruangan.</p>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Equipment
                   </label>
                   <select
                     name="equipment_id"
                     value={formData.equipment_id}
                     onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 dark:bg-ink dark:text-white rounded-lg focus:ring-2 focus:ring-primary outline-none"
                   >
                     <option value="">Tidak perlu equipment</option>
                     {equipment.map((item) => (
@@ -361,14 +361,14 @@ export default function Bookings() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Ruangan
                   </label>
                   <select
                     name="room_id"
                     value={formData.room_id}
                     onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 dark:bg-ink dark:text-white rounded-lg focus:ring-2 focus:ring-primary outline-none"
                   >
                     <option value="">Tidak perlu ruangan</option>
                     {rooms.map((item) => (
@@ -380,7 +380,7 @@ export default function Bookings() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Waktu Mulai
                   </label>
                   <input
@@ -388,13 +388,13 @@ export default function Bookings() {
                     name="start_time"
                     value={formData.start_time}
                     onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 dark:bg-ink dark:text-white rounded-lg focus:ring-2 focus:ring-primary outline-none"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Waktu Selesai
                   </label>
                   <input
@@ -402,20 +402,20 @@ export default function Bookings() {
                     name="end_time"
                     value={formData.end_time}
                     onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 dark:bg-ink dark:text-white rounded-lg focus:ring-2 focus:ring-primary outline-none"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Keperluan
                   </label>
                   <textarea
                     name="purpose"
                     value={formData.purpose}
                     onChange={handleFormChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-white/10 dark:bg-ink dark:text-white rounded-lg focus:ring-2 focus:ring-primary outline-none"
                     placeholder="Keperluan booking..."
                     rows="3"
                     required
@@ -426,13 +426,13 @@ export default function Bookings() {
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                    className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition"
                   >
                     Buat Booking
                   </button>

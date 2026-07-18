@@ -4,6 +4,7 @@ import '../css/app.css'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { ProtectedRoute, PublicRoute, AdminRoute } from './Components/ProtectedRoute'
 
 // Pages
@@ -19,6 +20,7 @@ import ActivityLog from './Pages/ActivityLog'
 
 function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <Router>
         <Routes>
@@ -35,6 +37,7 @@ function App() {
         </Routes>
       </Router>
     </AuthProvider>
+    </ThemeProvider>
   )
 }
 

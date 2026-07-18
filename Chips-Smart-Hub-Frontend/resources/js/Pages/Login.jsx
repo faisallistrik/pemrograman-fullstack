@@ -32,25 +32,25 @@ export default function Login() {
   return (
     <GuestLayout>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-          Login ke Smart-Hub
+        <h2 className="text-2xl font-heading font-bold text-center text-ink dark:text-white mb-6">
+          Login ke smarthub
         </h2>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          <div className="bg-red-50 border border-red-200 text-red-700 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
             {error}
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Email
           </label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-white/10 dark:bg-ink dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
             placeholder="admin@example.com"
             required
             disabled={loading}
@@ -59,10 +59,10 @@ export default function Login() {
 
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Password
             </label>
-            <a href="/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+            <a href="/forgot-password" className="text-sm text-primary hover:opacity-80 font-medium">
               Lupa password?
             </a>
           </div>
@@ -70,7 +70,7 @@ export default function Login() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-white/10 dark:bg-ink dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
             placeholder="••••••••"
             required
             disabled={loading}
@@ -80,21 +80,21 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full bg-primary text-white py-2 rounded-lg font-medium hover:opacity-90 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {loading ? 'Loading...' : 'Login'}
         </button>
 
-        <div className="text-center text-sm text-gray-600">
+        <div className="text-center text-sm text-gray-600 dark:text-gray-400">
           Belum punya akun?{' '}
-          <a href="/register" className="text-indigo-600 hover:text-indigo-700 font-medium">
+          <a href="/register" className="text-primary hover:opacity-80 font-medium">
             Daftar di sini
           </a>
         </div>
       </form>
 
       {/* Demo Credentials */}
-      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
+      <div className="mt-6 p-4 bg-info/10 border border-info/20 rounded-lg text-xs text-info">
         <p className="font-semibold mb-2">Demo Credentials:</p>
         <p>Email: admin@smart-hub.local</p>
         <p>Password: password</p>

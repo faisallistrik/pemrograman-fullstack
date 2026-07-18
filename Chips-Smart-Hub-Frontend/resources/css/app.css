@@ -3,7 +3,34 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* Manual (class-based) dark mode toggle instead of prefers-color-scheme */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-heading: 'Sora', ui-sans-serif, system-ui, sans-serif;
+
+    /* smarthub brand tokens */
+    --color-primary: #00A86B;
+    --color-primary-dark: #3FD69B;
+    --color-ink: #171B26;
+    --color-ink-soft: #1F2430;
+    --color-surface: #F6F8F7;
+    --color-info: #3E7BDB;
+    --color-warning: #E09A2F;
+}
+
+body {
+    background-color: var(--color-surface);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dark body {
+    background-color: var(--color-ink);
+}
+
+.font-heading {
+    font-family: var(--font-heading);
+    letter-spacing: -0.035em;
 }
