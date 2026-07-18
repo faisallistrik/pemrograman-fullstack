@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import NotificationBell from '../Components/NotificationBell'
 
 export default function Dashboard({ user, stats }) {
   const isAdmin = user?.role === 'admin'
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const handleLogout = () => {
     document.cookie = 'api_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
@@ -16,10 +18,20 @@ export default function Dashboard({ user, stats }) {
       <nav className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <a href="/dashboard" className="flex items-baseline gap-2">
-              <span className="text-xl font-bold text-indigo-600">Smart-Hub</span>
-              <span className="hidden lg:inline text-xs text-gray-400">Asset & Booking Management</span>
-            </a>
+            <div className="flex items-center">
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <a href="/dashboard" className="ml-4 flex items-baseline gap-2">
+                <span className="text-xl font-bold text-indigo-600">Smart-Hub</span>
+                <span className="hidden lg:inline text-xs text-gray-400">Asset & Booking Management</span>
+              </a>
+            </div>
             <div className="flex items-center gap-4">
               <NotificationBell />
               <span className="text-gray-700 text-sm hidden sm:inline">{user?.name}</span>
@@ -36,7 +48,7 @@ export default function Dashboard({ user, stats }) {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="hidden md:block w-64 bg-white border-r border-gray-200 min-h-screen">
+        <aside className={`${isSidebarOpen ? 'block' : 'hidden'} md:block w-64 bg-white border-r border-gray-200 min-h-screen`}>
           <nav className="p-4 space-y-2">
             <a href="/dashboard" className="block px-4 py-2 rounded-md bg-indigo-50 text-indigo-600 font-medium">
               Dashboard
